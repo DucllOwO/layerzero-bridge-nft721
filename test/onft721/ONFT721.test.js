@@ -4,8 +4,8 @@ const Web3 = require("web3")
 const web3 = new Web3()
 
 describe("ONFT721: ", function () {
-    const chainId_A = 1
-    const chainId_B = 2
+    const chainId_A = 10160
+    const chainId_B = 10214
     const name = "OmnichainNonFungibleToken"
     const symbol = "ONFT"
     const minGasToStore = 150000

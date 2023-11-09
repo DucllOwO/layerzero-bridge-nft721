@@ -102,13 +102,28 @@ module.exports = {
     },
 
     networks: {
+        base_goerli: {
+            url: "https://base-goerli.blockpi.network/v1/rpc/public	",
+            chainId: 84531,
+            accounts: [process.env.PRIVATE_KEY],
+        },
+        scroll_sepolia: {
+            url: "https://scroll-sepolia.blockpi.network/v1/rpc/public",
+            chainId: 534351,
+            accounts: [process.env.PRIVATE_KEY],
+        },
         "bsc-testnet": {
             url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
             chainId: 97,
             accounts: [process.env.PRIVATE_KEY],
         },
+        fuji: {
+            url: `https://api.avax-test.network/ext/bc/C/rpc`,
+            chainId: 43113,
+            accounts: [process.env.PRIVATE_KEY],
+        },
         mumbai: {
-            url: "https://rpc-mumbai.maticvigil.com/",
+            url: `https://polygon-mumbai-bor.publicnode.com`,
             chainId: 80001,
             accounts: [process.env.PRIVATE_KEY],
         },

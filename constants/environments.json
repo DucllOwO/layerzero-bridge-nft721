@@ -9,6 +9,8 @@
     "fantom"
   ],
   "testnet": [
+    "base_goerli",
+    "scroll_sepolia",
     "goerli",
     "bsc-testnet",
     "fuji",
