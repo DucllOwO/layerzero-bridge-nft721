@@ -1,15 +1,4 @@
 task("getSigners", "show the signers of the current mnemonic", require("./getSigners")).addOptionalParam("n", "how many to show", 3, types.int)
-//
-task("checkWireUp", "check wire up", require("./checkWireUp"))
-    .addParam("e", "environment testnet/mainet")
-    .addParam("contract", "the contract to delete and redeploy")
-
-//
-task("checkWireUpAll", "check wire up all", require("./checkWireUpAll"))
-    .addParam("e", "environment testnet/mainet")
-    .addParam("contract", "name of contract")
-    .addOptionalParam("proxyContract", "name of proxy contract")
-    .addOptionalParam("proxyChain", "name of proxy chain")
 
 //
 task(
@@ -45,14 +34,6 @@ task("setMinDstGas", "set min gas required on the destination gas", require("./s
     .addParam("targetNetwork", "the chainId to transfer to")
     .addParam("contract", "contract name")
     .addParam("minGas", "min gas")
-
-// npx hardhat deployWireCheck --e testnet --contract ExampleOFT --proxy-contract ExampleBasedOFT --proxy-chain optimism-kovan
-// npx hardhat deployWireCheck --e testnet --contract ExampleUniversalONFT721
-task("deployWireCheck", "", require("./deployWireCheck"))
-    .addParam("e", "environment testnet/mainet")
-    .addParam("contract", "")
-    .addOptionalParam("proxyChain", "")
-    .addOptionalParam("proxyContract", "")
 
 //
 task("getStoredPayloadEvent", "Detect and clear stored payload", require("./getStoredPayloadEvent"))
