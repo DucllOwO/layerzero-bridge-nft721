@@ -3,8 +3,9 @@ pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+
 
 import "./CampaignTypesNFT721.sol";
 import "./libraries/InZNFTTypeDetail.sol";
@@ -30,22 +31,16 @@ contract CampaignFactory is AccessControl {
      */
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    // InZCampaigns Address list
-    address[] public inZNftCampaignsAddress;
-
-    // implementAddress for NFT
-    address public nftImplementationAddressERC721;
-
-
     // List of NFT collections
     EnumerableSet.AddressSet private nftCollectionsList;
+
+    address public onft721ImplementationAddress;
 
     /**
      *          Contructor of the contract
      */
-    constructor(address _nftImplementationAddressERC721) {
-        nftImplementationAddressERC721 = _nftImplementationAddressERC721;
-
+    constructor(address _onft721Implementation) {
+        onft721ImplementationAddress = _onft721Implementation;
         _setupRole(ADMIN_ROLE, msg.sender);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -64,11 +59,13 @@ contract CampaignFactory is AccessControl {
         IERC20 _coinToken,
         string memory _symbol,
         string memory _name,
-        InZNFTTypeDetail.NFTTypeDetail[] memory _nftTypesDetail
+        InZNFTTypeDetail.NFTTypeDetail[] memory _nftTypesDetail,
+        uint _minGasToStore,
+        address _layerZeroEndpoint
     ) external {
 
         address campaign;
-        campaign = Clones.clone(nftImplementationAddressERC721);
+        campaign = Clones.clone(onft721ImplementationAddress);
 
         CampaignTypesNFT721(campaign).initialize(
             _campaignPaymentAddress,
@@ -76,17 +73,17 @@ contract CampaignFactory is AccessControl {
             _name,
             _baseMetadataUri,
             msg.sender,
-            address(this)
+            address(this),
+            _minGasToStore,
+            _layerZeroEndpoint
         );
 
-        nftCollectionsList.add(campaign);
+        nftCollectionsList.add(address(campaign));
 
         // Config prices
         for (uint i = 0; i < _nftTypesDetail.length; i++) {
             CampaignTypesNFT721(campaign).configNFTType(_nftTypesDetail[i].nftType, _nftTypesDetail[i].price, _nftTypesDetail[i].totalSupply);
         }
-
-        inZNftCampaignsAddress.push(address(campaign));
 
         emit NewNFT(
             address(campaign),
@@ -99,8 +96,6 @@ contract CampaignFactory is AccessControl {
         );
     }
 
-    // function grantRoles(address _contract, )
-
     /**
      *              INHERITANCE FUNCTIONS
      */
@@ -110,35 +105,10 @@ contract CampaignFactory is AccessControl {
         return super.supportsInterface(interfaceId);
     }
 
-    /**
-     *              GETTERS
-     */
-    function getAllNFTCampaign()
-        external
-        view
-        onlyRole(ADMIN_ROLE)
-        returns (address[] memory)
-    {
-        return inZNftCampaignsAddress;
-    }
-
     function getCollectionAddress(
         uint256 index
     ) external view returns (address) {
         return nftCollectionsList.at(index);
     }
 
-    function isValidNftCollection(
-        address _nftCollection
-    ) external view returns (bool) {
-        return nftCollectionsList.contains(_nftCollection);
-    }
-
-    /**
-     * SETTERS
-     */
-
-    function setImplementationAddressNFT721(address _implementationNFT721) external onlyRole(ADMIN_ROLE) {
-        nftImplementationAddressERC721 = _implementationNFT721;
-    }
 }

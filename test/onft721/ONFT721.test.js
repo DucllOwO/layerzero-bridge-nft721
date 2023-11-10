@@ -18,7 +18,7 @@ describe("ONFT721: ", function () {
         owner = (await ethers.getSigners())[0]
         warlock = (await ethers.getSigners())[1]
         LZEndpointMock = await ethers.getContractFactory("LZEndpointMock")
-        ONFT = await ethers.getContractFactory("ONFT721Mock")
+        ONFT = await ethers.getContractFactory("CampaignTypesNFT721")
     })
 
     beforeEach(async function () {

@@ -4,29 +4,18 @@ pragma solidity ^0.8.2;
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721RoyaltyUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import "./libraries/InZNFTTypeDetail.sol";
-import "./interfaces/IInZNFTMarket.sol";
-import "./libraries/InterfaceFunction.sol";
-import "./interfaces/IFactory.sol";
-
+import "./ONFT721Core.sol";
+import "./interfaces/IONFT721.sol";
 
 contract CampaignTypesNFT721 is
+    ONFT721Core,
+    IONFT721,
     ERC721Upgradeable,
-    AccessControlUpgradeable,
-    UUPSUpgradeable,
-    ERC721RoyaltyUpgradeable,
-    OwnableUpgradeable
-
+    AccessControlUpgradeable
 {
     /**
      *          External using
@@ -82,22 +71,19 @@ contract CampaignTypesNFT721 is
         _;
     }
 
-    /**
-     *          Contract Initialization
-     */
     function initialize(
         address _campaignPaymentAddress,
         string memory _symbol,
         string memory _name,
         string memory _baseMetadataUri,
         address _adminAddress,
-        address _factoryAddress
-    ) external initializer {
+        address _factoryAddress,
+        uint _minGasToStore,
+        address _layerZeroEndpoint
+    ) public initializer {
         __ERC721_init(_name, _symbol);
         __AccessControl_init();
-        __UUPSUpgradeable_init();
-        _transferOwnership(_adminAddress);
-
+        
         campaignPaymentAddress = _campaignPaymentAddress;
 
         factoryAddress = _factoryAddress;
@@ -167,6 +153,34 @@ contract CampaignTypesNFT721 is
         emit Mint(_callbackData, _to, _returnOrder);
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ONFT721Core, ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+
+    function _debitFrom(
+        address _from,
+        uint16,
+        bytes memory,
+        uint _tokenId
+    ) internal virtual override {
+        require(_isApprovedOrOwner(_msgSender(), _tokenId), "ONFT721: send caller is not owner nor approved");
+        require(ownerOf(_tokenId) == _from, "ONFT721: send from incorrect owner");
+        _transfer(_from, address(this), _tokenId);
+    }
+
+    function _creditTo(
+        uint16,
+        address _toAddress,
+        uint _tokenId
+    ) internal virtual override {
+        require(!_exists(_tokenId) || (_exists(_tokenId) && ownerOf(_tokenId) == address(this)));
+        if (!_exists(_tokenId)) {
+            _safeMint(_toAddress, _tokenId);
+        } else {
+            _transfer(address(this), _toAddress, _tokenId);
+        }
+    }
+
     // Get NFT IDs by owner
     function getNftIdsByOwner(address _owner)
         external
@@ -176,14 +190,6 @@ contract CampaignTypesNFT721 is
         uint256[] memory ids = holders[_owner];
         return ids;
     }
-    /**
-     *          INTERNAL FUNCTION
-     */
-    function _authorizeUpgrade(address newImplementation)
-    internal
-    override
-    onlyRole(ADMIN_ROLE)
-    {}
 
     /**
      *      Function that gets latest ID of this NFT contract
@@ -191,48 +197,6 @@ contract CampaignTypesNFT721 is
      */
     function lastId() public view returns (uint256) {
         return tokenIdCounter.current();
-    }
-
-    /**
-     *  @notice     This function is only used for estimation purpose, therefore the call will always revert and encode the result in the revert data.
-     *  @dev        This function's used for estimate gas for a execution call
-     *  @param to           The address of caller
-     *  @param value        The value of msg.value
-     *  @param data         The data sent with tx
-     *  @param operation    the operation of tx
-     */
-    function requiredTxGas(
-        address to,
-        uint256 value,
-        bytes calldata data,
-        InterfaceFunction.Operation operation
-    )
-        external
-        onlyRole(ADMIN_ROLE)
-        // returns (uint256)
-    {
-        InterfaceFunction.requiredTxGas(to, value, data, operation);
-    }
-
-    /**
-     * This function allow ADMIN can execute a function witj specificed logic and params flexibily
-     * @param to The caller of tx
-     * @param value The msg.value of tx
-     * @param txGas The estimated gas using for the tx
-     * @param data The data comming with the tx
-     * @param operation The operation of tx
-     */
-    function execTx(
-        address to,
-        uint256 value,
-        uint256 txGas,
-        bytes calldata data,
-        InterfaceFunction.Operation operation
-    )
-        external
-        onlyRole(ADMIN_ROLE)
-    {
-        InterfaceFunction.execTx(to, value, txGas, data, operation);
     }
 
     /** Burns a list  nft ids. */
@@ -244,31 +208,6 @@ contract CampaignTypesNFT721 is
 
     function setCampaignPaymentAddress(address _campaignPaymentAddress) external onlyRole(DESIGN_ROLE) {
         campaignPaymentAddress = _campaignPaymentAddress;
-    }
-
-    /**
-     *      INHERITANCE FUNCTIONS
-     */
-    function supportsInterface(
-        bytes4 interfaceId
-    )
-        public
-        view
-        override(
-            ERC721Upgradeable,
-            AccessControlUpgradeable,
-            ERC721RoyaltyUpgradeable
-        )
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
-    }
-
-    function _burn(
-        uint256 tokenId
-    ) internal override(ERC721Upgradeable, ERC721RoyaltyUpgradeable) {
-        super._burn(tokenId);
-        _resetTokenRoyalty(tokenId);
     }
 
     /**

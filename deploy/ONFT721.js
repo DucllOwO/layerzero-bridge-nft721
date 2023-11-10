@@ -8,7 +8,7 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     const lzEndpointAddress = LZ_ENDPOINTS[hre.network.name]
     console.log(`[${hre.network.name}] Endpoint Address: ${lzEndpointAddress}`)
 
-    const name = "ONFT721Mock"
+    const name = "ONFT721"
     const symbol = "SYM"
     const minGasToStore = 100000
 
