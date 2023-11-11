@@ -35,9 +35,9 @@ contract CampaignFactory {
 
     address public onft721ImplementationAddress;
 
-    // constructor(address _implementationAddress) {
-    //     onft721ImplementationAddress = _implementationAddress;
-    // } 
+    constructor(address _implementationAddress) {
+        onft721ImplementationAddress = _implementationAddress;
+    } 
 
     /**
      * Create instance of InZCampaign;
@@ -55,27 +55,28 @@ contract CampaignFactory {
         uint _minGasToStore,
         address _layerZeroEndpoint
     ) external {
-        CampaignTypesNFT721 campaign;
-        campaign = new CampaignTypesNFT721(
-            _name,
-            _symbol,
-            _campaignPaymentAddress,
-            _baseMetadataUri,
-            // address(this),
-            _minGasToStore,
-            _layerZeroEndpoint
-        ); 
-        //Clones.clone(onft721ImplementationAddress);
-
-        // CampaignTypesNFT721(campaign).initialize(
+        address campaign;
+        campaign = 
+        // new CampaignTypesNFT721(
         //     _name,
         //     _symbol,
         //     _campaignPaymentAddress,
         //     _baseMetadataUri,
-        //     address(this),
+        //     // address(this),
         //     _minGasToStore,
         //     _layerZeroEndpoint
-        // );
+        // ); 
+        Clones.clone(onft721ImplementationAddress);
+
+        CampaignTypesNFT721(campaign).initialize(
+            _name,
+            _symbol,
+            _campaignPaymentAddress,
+            _baseMetadataUri,
+            //address(this),
+            _minGasToStore,
+            _layerZeroEndpoint
+        );
 
         nftCollectionsList.add(address(campaign));
 

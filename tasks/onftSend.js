@@ -3,7 +3,7 @@ const CHAIN_ID = require("../constants/chainIds.json")
 module.exports = async function (taskArgs, hre) {
     const signers = await ethers.getSigners()
     const owner = signers[0]
-    const toAddress = owner.address
+    const toAddress = "0x62722Ca28566799b3DE4675096c95B1B0DbCE43E" //owner.address
     const tokenId = taskArgs.tokenId
     // get remote chain id
     const remoteChainId = CHAIN_ID[taskArgs.targetNetwork]

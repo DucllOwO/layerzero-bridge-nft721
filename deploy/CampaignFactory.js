@@ -11,16 +11,23 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     const lzEndpointAddress = LZ_ENDPOINTS[hre.network.name]
     console.log(`[${hre.network.name}] Endpoint Address: ${lzEndpointAddress}`)
 
-    const name = "ONFT721"
+    const name = "MumbaiScroll"
     const symbol = "SYM"
     const minGasToStore = 100000
     const nftTypeDetails = [{ nftType: 0, price: 1000, totalSupply: 100000 }]
 
-    // console.log("🚀 ~ file: CampaignFactory.js:25 ~ nft721Implementation:", nft721Implementation.address)
+    const nft721Implementation = await deploy("CampaignTypesNFT721", {
+        from: deployer,
+        args: [],
+        log: true,
+        waitConfirmations: 1,
+    })
+
+    console.log("🚀 ~ file: CampaignFactory.js:25 ~ nft721Implementation:", nft721Implementation.address)
 
     const campaignFactory = await deploy("CampaignFactory", {
         from: deployer,
-        args: [],
+        args: [nft721Implementation.address],
         log: true,
         waitConfirmations: 1,
     })
@@ -34,6 +41,7 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     let contract = await ethers.getContract("CampaignFactory")
 
     //const campaignTypesNFT721 = await contract.getCollectionAddress(0)
+
     const campaignTypesNFT721 = await contract.createCampaign(
         _campaignPaymentAddress,
         _baseMetadataUri,
@@ -41,15 +49,12 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
         symbol,
         name,
         minGasToStore,
-        lzEndpointAddress,
-        { gasLimit: 1500000 }
+        lzEndpointAddress
     )
 
     const txCampaign = await campaignTypesNFT721.wait()
 
     console.log("🚀 ~ file: CampaignFactory.js:49 ~ txCampaign:", txCampaign.events)
-
-    console.log("🚀 ~ file: CampaignFactory.js:49 ~ txCampaign:", JSON.stringify(txCampaign.events))
 }
 
 module.exports.tags = ["CampaignFactory"]
