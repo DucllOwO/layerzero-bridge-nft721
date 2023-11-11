@@ -16,18 +16,11 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     const minGasToStore = 100000
     const nftTypeDetails = [{ nftType: 0, price: 1000, totalSupply: 100000 }]
 
-    const nft721Implementation = await deploy("CampaignTypesNFT721", {
-        from: deployer,
-        args: [],
-        log: true,
-        waitConfirmations: 1,
-    })
-
-    console.log("🚀 ~ file: CampaignFactory.js:25 ~ nft721Implementation:", nft721Implementation.address)
+    // console.log("🚀 ~ file: CampaignFactory.js:25 ~ nft721Implementation:", nft721Implementation.address)
 
     const campaignFactory = await deploy("CampaignFactory", {
         from: deployer,
-        args: [nft721Implementation.address],
+        args: [],
         log: true,
         waitConfirmations: 1,
     })
@@ -47,15 +40,16 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
         erc20,
         symbol,
         name,
-        nftTypeDetails,
         minGasToStore,
         lzEndpointAddress,
-        { gasLimit: 15000000 }
+        { gasLimit: 1500000 }
     )
 
-    console.log("🚀 ~ file: CampaignTypesNFT721.js:31 ~ campaignTypesNFT721:", campaignTypesNFT721)
+    const txCampaign = await campaignTypesNFT721.wait()
 
-    console.log(await campaignTypesNFT721.wait())
+    console.log("🚀 ~ file: CampaignFactory.js:49 ~ txCampaign:", txCampaign.events)
+
+    console.log("🚀 ~ file: CampaignFactory.js:49 ~ txCampaign:", JSON.stringify(txCampaign.events))
 }
 
 module.exports.tags = ["CampaignFactory"]
