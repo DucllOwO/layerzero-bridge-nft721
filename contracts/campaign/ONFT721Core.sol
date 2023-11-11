@@ -188,14 +188,14 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, ReentrancyGuard, IONF
     }
 
     // ensures enough gas in adapter params to handle batch transfer gas amounts on the dst
-    function setDstChainIdToTransferGas(uint16 _dstChainId, uint _dstChainIdToTransferGas) external onlyOwner {
+    function setDstChainIdToTransferGas(uint16 _dstChainId, uint _dstChainIdToTransferGas) external {
         require(_dstChainIdToTransferGas > 0, "dstChainIdToTransferGas must be > 0");
         dstChainIdToTransferGas[_dstChainId] = _dstChainIdToTransferGas;
         emit SetDstChainIdToTransferGas(_dstChainId, _dstChainIdToTransferGas);
     }
 
     // limit on src the amount of tokens to batch send
-    function setDstChainIdToBatchLimit(uint16 _dstChainId, uint _dstChainIdToBatchLimit) external onlyOwner {
+    function setDstChainIdToBatchLimit(uint16 _dstChainId, uint _dstChainIdToBatchLimit) external {
         require(_dstChainIdToBatchLimit > 0, "dstChainIdToBatchLimit must be > 0");
         dstChainIdToBatchLimit[_dstChainId] = _dstChainIdToBatchLimit;
         emit SetDstChainIdToBatchLimit(_dstChainId, _dstChainIdToBatchLimit);

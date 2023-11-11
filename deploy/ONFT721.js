@@ -12,12 +12,16 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     const symbol = "SYM"
     const minGasToStore = 100000
 
-    await deploy("ONFT721Mock", {
+    const _campaignPaymentAddress = "0x29E754233F6A50ee5AE3ee6A0217aD907dc3386B"
+    const _baseMetadataUri = "baseURI.com/uri"
+    const erc20 = "0x0000000000000000000000000000000000001010"
+
+    await deploy("CampaignTypesNFT721", {
         from: deployer,
-        args: [name, symbol, minGasToStore, lzEndpointAddress],
+        args: [name, symbol, _campaignPaymentAddress, _baseMetadataUri, minGasToStore, lzEndpointAddress],
         log: true,
         waitConfirmations: 1,
     })
 }
 
-module.exports.tags = ["ONFT721"]
+module.exports.tags = ["CampaignTypesNFT721"]

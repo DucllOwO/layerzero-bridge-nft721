@@ -4,7 +4,7 @@ pragma solidity ^0.8.2;
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "./libraries/InZNFTTypeDetail.sol";
@@ -15,7 +15,7 @@ import "./interfaces/IONFT721.sol";
 
 contract CampaignTypesNFT721 is
     ONFT721Core,
-    ERC721Upgradeable
+    ERC721
 {
     /**
      *          External using
@@ -25,7 +25,7 @@ contract CampaignTypesNFT721 is
     /**
      *          Event Definitions
      */
-    event TokenCreated(address to, uint256 tokenId, uint256 tokenType);
+    event TokenCreated(address to, uint256 tokenId);
 
     struct ReturnMintingOrder {
         uint256 nftType;
@@ -33,7 +33,6 @@ contract CampaignTypesNFT721 is
     }
 
     event Mint(
-        string callbackData,
         address to
     );
     // /**
@@ -61,24 +60,26 @@ contract CampaignTypesNFT721 is
     // mapping NFT creted from Factory
     address internal factoryAddress;
 
-    function initialize(
+    constructor(
         string memory _name,
         string memory _symbol,
         address _campaignPaymentAddress,
         string memory _baseMetadataUri,
-        address _factoryAddress,
+        //address _factoryAddress,
         uint _minGasToStore,
         address _layerZeroEndpoint
-    ) public initializer {
-        __ERC721_init(_name, _symbol);
+    ) public ERC721(_name, _symbol) {
+        //__ERC721_init(_name, _symbol);
         campaignPaymentAddress = _campaignPaymentAddress;
 
-        factoryAddress = _factoryAddress;
+        //factoryAddress = _factoryAddress;
 
         baseMetadataUri = _baseMetadataUri;
 
         ONFT721Core.initialize(_minGasToStore, _layerZeroEndpoint);
     }
+
+    //function initialize
 
     function configNFTType(uint8 _nftType,
         uint256 _price,
@@ -94,17 +95,14 @@ contract CampaignTypesNFT721 is
         nftTypes[_nftType] = _nftTypeNew;
     }
 
-    /**
-    * @dev              Mint tokens for id defined (first buy on market)
-    * @param _amount    Amount the user wants to mint
-    * @param _tokenType Type of token to mint
-    * @param _to        Address receive NFT
-    */
+    // /**
+    // * @dev              Mint tokens for id defined (first buy on market)
+    // * @param _amount    Amount the user wants to mint
+    // * @param _tokenType Type of token to mint
+    // * @param _to        Address receive NFT
+    // */
     function mint(
-        uint256 _amount,
-        uint8 _tokenType,
-        address _to,
-        string calldata _callbackData
+        address _to
     ) external {
         // InZNFTTypeDetail.NFTTypeDetail memory nftTypeDetail = nftTypes[_tokenType];
         // require(nftTypeDetail.totalSupply > 0, "Token type does not exist");
@@ -139,13 +137,12 @@ contract CampaignTypesNFT721 is
             // Update user bought list
             holders[_to].push(_id);
             // Update token id by type
-            tokenIdsByType[_id] = _tokenType;
-            emit TokenCreated(_to, _id, _tokenType);
+            emit TokenCreated(_to, _id);
 
-        emit Mint(_callbackData, _to);
+        emit Mint(_to);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ONFT721Core, ERC721Upgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ONFT721Core, ERC721) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
