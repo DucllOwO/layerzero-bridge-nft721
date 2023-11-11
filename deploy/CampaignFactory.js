@@ -1,4 +1,7 @@
+const { ethers } = require("hardhat")
 const LZ_ENDPOINTS = require("../constants/layerzeroEndpoints.json")
+
+// deploy command: npx hardhat deploy CampaignFactory --network mumbai --tags CampaignFactory
 
 module.exports = async function ({ deployments, getNamedAccounts }) {
     const { deploy } = deployments
@@ -13,19 +16,32 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     const minGasToStore = 100000
     const nftTypeDetails = [{ nftType: 0, price: 1000, totalSupply: 100000 }]
 
-    const campaignFactory = await deploy("CampaignFactory", {
+    const nft721Implementation = await deploy("CampaignTypesNFT721", {
         from: deployer,
         args: [],
         log: true,
         waitConfirmations: 1,
     })
-    console.log("🚀 ~ file: CampaignTypesNFT721.js:21 ~ campaignFactory:", campaignFactory)
+
+    console.log("🚀 ~ file: CampaignFactory.js:25 ~ nft721Implementation:", nft721Implementation.address)
+
+    const campaignFactory = await deploy("CampaignFactory", {
+        from: deployer,
+        args: [nft721Implementation.address],
+        log: true,
+        waitConfirmations: 1,
+    })
+
+    console.log("🚀 ~ file: CampaignTypesNFT721.js:26 ~ campaignFactory:", campaignFactory.address)
 
     const _campaignPaymentAddress = "0x29E754233F6A50ee5AE3ee6A0217aD907dc3386B"
     const _baseMetadataUri = "baseURI.com/uri"
-    const erc20 = "0x2f3f0589021d202e9fbb48cb17b23961b9ef75b3"
+    const erc20 = "0x0000000000000000000000000000000000001010"
 
-    const campaignTypesNFT721 = await campaignFactory.createCampaign(
+    let contract = await ethers.getContract("CampaignFactory")
+
+    //const campaignTypesNFT721 = await contract.getCollectionAddress(0)
+    const campaignTypesNFT721 = await contract.createCampaign(
         _campaignPaymentAddress,
         _baseMetadataUri,
         erc20,
@@ -33,10 +49,13 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
         name,
         nftTypeDetails,
         minGasToStore,
-        lzEndpointAddress
+        lzEndpointAddress,
+        { gasLimit: 15000000 }
     )
 
     console.log("🚀 ~ file: CampaignTypesNFT721.js:31 ~ campaignTypesNFT721:", campaignTypesNFT721)
+
+    console.log(await campaignTypesNFT721.wait())
 }
 
-module.exports.tags = ["CampaignTypesNFT721"]
+module.exports.tags = ["CampaignFactory"]

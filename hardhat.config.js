@@ -121,6 +121,8 @@ module.exports = {
             url: `https://api.avax-test.network/ext/bc/C/rpc`,
             chainId: 43113,
             accounts: [process.env.PRIVATE_KEY],
+            gas: 10000000,
+            gasPrice: 30000000000,
         },
         mumbai: {
             url: `https://polygon-mumbai-bor.publicnode.com`,

@@ -2,22 +2,23 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interfaces/ILayerZeroReceiver.sol";
 import "./interfaces/ILayerZeroUserApplicationConfig.sol";
 import "./interfaces/ILayerZeroEndpoint.sol";
 import "../libraries/BytesLib.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /*
  * a generic LzReceiver implementation
  */
-abstract contract LzApp is Ownable, ILayerZeroReceiver, ILayerZeroUserApplicationConfig {
+abstract contract LzApp is OwnableUpgradeable, ILayerZeroReceiver, ILayerZeroUserApplicationConfig {
     using BytesLib for bytes;
 
     // ua can not send payload larger than this by default, but it can be changed by the ua owner
     uint public constant DEFAULT_PAYLOAD_SIZE_LIMIT = 10000;
 
-    ILayerZeroEndpoint public immutable lzEndpoint;
+    ILayerZeroEndpoint public lzEndpoint;
     mapping(uint16 => bytes) public trustedRemoteLookup;
     mapping(uint16 => mapping(uint16 => uint)) public minDstGasLookup;
     mapping(uint16 => uint) public payloadSizeLimitLookup;
@@ -28,8 +29,13 @@ abstract contract LzApp is Ownable, ILayerZeroReceiver, ILayerZeroUserApplicatio
     event SetTrustedRemoteAddress(uint16 _remoteChainId, bytes _remoteAddress);
     event SetMinDstGas(uint16 _dstChainId, uint16 _type, uint _minDstGas);
 
-    constructor(address _endpoint) {
+    function initializeLzApp(address _endpoint) public virtual {
+        __Ownable_init();
         lzEndpoint = ILayerZeroEndpoint(_endpoint);
+    }
+
+    function getOwner() external returns (address) {
+        return owner();
     }
 
     function lzReceive(
@@ -109,6 +115,10 @@ abstract contract LzApp is Ownable, ILayerZeroReceiver, ILayerZeroUserApplicatio
         uint _configType
     ) external view returns (bytes memory) {
         return lzEndpoint.getConfig(_version, _chainId, address(this), _configType);
+    }
+
+    function setLZEndpoint(address _lzEndpoint) public {
+        lzEndpoint = ILayerZeroEndpoint(_lzEndpoint);
     }
 
     // generic config for LayerZero user Application

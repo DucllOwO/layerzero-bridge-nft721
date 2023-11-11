@@ -10,7 +10,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import "./CampaignTypesNFT721.sol";
 import "./libraries/InZNFTTypeDetail.sol";
 
-contract CampaignFactory is AccessControl {
+contract CampaignFactory {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /**
@@ -19,7 +19,6 @@ contract CampaignFactory is AccessControl {
     event NewNFT(
         address campaignAddress,
         address campaignPaymentAddress,
-        InZNFTTypeDetail.NFTTypeDetail[] nftTypesDetail,
         IERC20 coinToken,
         string symbol,
         string name,
@@ -36,14 +35,10 @@ contract CampaignFactory is AccessControl {
 
     address public onft721ImplementationAddress;
 
-    /**
-     *          Contructor of the contract
-     */
-    constructor(address _onft721Implementation) {
-        onft721ImplementationAddress = _onft721Implementation;
-        _setupRole(ADMIN_ROLE, msg.sender);
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    }
+    constructor(address _implementationAddress) {
+        onft721ImplementationAddress = _implementationAddress;
+    } 
+
 
     /**
      * Create instance of InZCampaign;
@@ -51,7 +46,6 @@ contract CampaignFactory is AccessControl {
      * @param _coinToken currency that KOLs want to sell nft campaign
      * @param _symbol symbol of this campaign
      * @param _name name of this campaign
-     * @param _nftTypesDetail nft type detail
      */
     function createCampaign(
         address _campaignPaymentAddress,
@@ -63,16 +57,15 @@ contract CampaignFactory is AccessControl {
         uint _minGasToStore,
         address _layerZeroEndpoint
     ) external {
-
         address campaign;
-        campaign = Clones.clone(onft721ImplementationAddress);
+        campaign = Clones.clone(onft721ImplementationAddress); 
+        //Clones.clone(onft721ImplementationAddress);
 
         CampaignTypesNFT721(campaign).initialize(
-            _campaignPaymentAddress,
-            _symbol,
             _name,
+            _symbol,
+            _campaignPaymentAddress,
             _baseMetadataUri,
-            msg.sender,
             address(this),
             _minGasToStore,
             _layerZeroEndpoint
@@ -81,14 +74,13 @@ contract CampaignFactory is AccessControl {
         nftCollectionsList.add(address(campaign));
 
         // Config prices
-        for (uint i = 0; i < _nftTypesDetail.length; i++) {
-            CampaignTypesNFT721(campaign).configNFTType(_nftTypesDetail[i].nftType, _nftTypesDetail[i].price, _nftTypesDetail[i].totalSupply);
-        }
+        // for (uint i = 0; i < _nftTypesDetail.length; i++) {
+        //     CampaignTypesNFT721(campaign).configNFTType(_nftTypesDetail[i].nftType, _nftTypesDetail[i].price, _nftTypesDetail[i].totalSupply);
+        // }
 
         emit NewNFT(
             address(campaign),
             _campaignPaymentAddress,
-            _nftTypesDetail,
             _coinToken,
             _symbol,
             _name,
@@ -96,19 +88,10 @@ contract CampaignFactory is AccessControl {
         );
     }
 
-    /**
-     *              INHERITANCE FUNCTIONS
-     */
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(AccessControl) returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
-
     function getCollectionAddress(
-        uint256 index
-    ) external view returns (address) {
-        return nftCollectionsList.at(index);
+    ) external pure returns (address) {
+
+        return address(0x0);
     }
 
 }

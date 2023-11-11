@@ -13,7 +13,9 @@ import "../libraries/ExcessivelySafeCall.sol";
 abstract contract NonblockingLzApp is LzApp {
     using ExcessivelySafeCall for address;
 
-    constructor(address _endpoint) LzApp(_endpoint) {}
+    function initializeNonblockingLzApp(address _endpoint) public {
+        LzApp.initializeLzApp(_endpoint);
+    }
 
     mapping(uint16 => mapping(bytes => mapping(uint64 => bytes32))) public failedMessages;
 
@@ -55,7 +57,7 @@ abstract contract NonblockingLzApp is LzApp {
         bytes calldata _payload
     ) public virtual {
         // only internal transaction
-        require(_msgSender() == address(this), "NonblockingLzApp: caller must be LzApp");
+        require(msg.sender == address(this), "NonblockingLzApp: caller must be LzApp");
         _nonblockingLzReceive(_srcChainId, _srcAddress, _nonce, _payload);
     }
 

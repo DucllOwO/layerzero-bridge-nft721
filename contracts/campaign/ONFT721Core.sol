@@ -7,6 +7,7 @@ import "../lzApp/NonblockingLzApp.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+
 abstract contract ONFT721Core is NonblockingLzApp, ERC165, ReentrancyGuard, IONFT721Core {
     uint16 public constant FUNCTION_TYPE_SEND = 1;
 
@@ -22,9 +23,12 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, ReentrancyGuard, IONF
     mapping(uint16 => uint) public dstChainIdToTransferGas; // per transfer amount of gas required to mint/transfer on the dst
     mapping(bytes32 => StoredCredit) public storedCredits;
 
-    constructor(uint _minGasToTransferAndStore, address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {
+    function initialize(uint _minGasToTransferAndStore, address _lzEndpoint) public {
         require(_minGasToTransferAndStore > 0, "minGasToTransferAndStore must be > 0");
         minGasToTransferAndStore = _minGasToTransferAndStore;
+
+        // call initialize cua nonblockinglzapp
+        NonblockingLzApp.initializeNonblockingLzApp(_lzEndpoint);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
@@ -177,7 +181,7 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, ReentrancyGuard, IONF
         return i;
     }
 
-    function setMinGasToTransferAndStore(uint _minGasToTransferAndStore) external onlyOwner {
+    function setMinGasToTransferAndStore(uint _minGasToTransferAndStore) public {
         require(_minGasToTransferAndStore > 0, "minGasToTransferAndStore must be > 0");
         minGasToTransferAndStore = _minGasToTransferAndStore;
         emit SetMinGasToTransferAndStore(_minGasToTransferAndStore);

@@ -22,10 +22,14 @@ module.exports = async function (taskArgs, hre) {
 
     // get deployed remote contract address
     const remoteAddress = getDeploymentAddresses(taskArgs.targetNetwork)[remoteContract]
+    console.log("🚀 ~ file: setTrustedRemote.js:25 ~ remoteContract:", remoteContract)
+    console.log("🚀 ~ file: setTrustedRemote.js:25 ~ taskArgs.targetNetwork:", taskArgs.targetNetwork)
+    console.log("🚀 ~ file: setTrustedRemote.js:25 ~ remoteAddress:", remoteAddress)
 
     // get remote chain id
     const remoteChainId = CHAIN_ID[taskArgs.targetNetwork]
 
+    console.log("🚀 ~ file: setTrustedRemote.js:30 ~ localContractInstance.address:", localContractInstance.address)
     // concat remote and local address
     let remoteAndLocal = hre.ethers.utils.solidityPack(["address", "address"], [remoteAddress, localContractInstance.address])
 
@@ -34,13 +38,14 @@ module.exports = async function (taskArgs, hre) {
 
     if (!isTrustedRemoteSet) {
         try {
-            let tx = await (await localContractInstance.setTrustedRemote(remoteChainId, remoteAndLocal)).wait()
+            let tx = await (await localContractInstance.setTrustedRemote(remoteChainId, remoteAndLocal, { gasLimit: 150000 })).wait()
             console.log(`✅ [${hre.network.name}] setTrustedRemote(${remoteChainId}, ${remoteAndLocal})`)
             console.log(` tx: ${tx.transactionHash}`)
         } catch (e) {
-            if (e.error.message.includes("The chainId + address is already trusted")) {
+            if (e.error?.message.includes("The chainId + address is already trusted")) {
                 console.log("*source already set*")
             } else {
+                console.log("🚀 ~ file: setTrustedRemote.js:46 ~ e.error?.message:", e.error?.message)
                 console.log(`❌ [${hre.network.name}] setTrustedRemote(${remoteChainId}, ${remoteAndLocal})`)
             }
         }

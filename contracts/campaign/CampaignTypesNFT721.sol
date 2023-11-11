@@ -5,17 +5,17 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "./libraries/InZNFTTypeDetail.sol";
 import "./ONFT721Core.sol";
+import "./interfaces/IONFT721Core.sol";
+import "../lzApp/interfaces/ILayerZeroEndpoint.sol";
 import "./interfaces/IONFT721.sol";
 
 contract CampaignTypesNFT721 is
     ONFT721Core,
-    IONFT721,
-    ERC721Upgradeable,
-    AccessControlUpgradeable
+    ERC721Upgradeable
 {
     /**
      *          External using
@@ -34,8 +34,7 @@ contract CampaignTypesNFT721 is
 
     event Mint(
         string callbackData,
-        address to,
-        ReturnMintingOrder[] returnMintingOrder
+        address to
     );
     // /**
     //  *          Storage data declarations
@@ -62,39 +61,23 @@ contract CampaignTypesNFT721 is
     // mapping NFT creted from Factory
     address internal factoryAddress;
 
-    /**
-     * @notice Checks if the msg.sender is a contract or a proxy
-     */
-    modifier notContract() {
-        require(!_isContract(msg.sender), "Contract not allowed");
-        require(msg.sender == tx.origin, "Proxy contract not allowed");
-        _;
-    }
-
     function initialize(
-        address _campaignPaymentAddress,
-        string memory _symbol,
         string memory _name,
+        string memory _symbol,
+        address _campaignPaymentAddress,
         string memory _baseMetadataUri,
-        address _adminAddress,
         address _factoryAddress,
         uint _minGasToStore,
         address _layerZeroEndpoint
     ) public initializer {
         __ERC721_init(_name, _symbol);
-        __AccessControl_init();
-        
         campaignPaymentAddress = _campaignPaymentAddress;
 
         factoryAddress = _factoryAddress;
 
         baseMetadataUri = _baseMetadataUri;
 
-        _setupRole(ADMIN_ROLE, _adminAddress);
-        _setupRole(DEFAULT_ADMIN_ROLE, _adminAddress);
-
-        _setupRole(DESIGN_ROLE, _adminAddress);
-        _setupRole(BURNER_ROLE, _adminAddress);
+        ONFT721Core.initialize(_minGasToStore, _layerZeroEndpoint);
     }
 
     function configNFTType(uint8 _nftType,
@@ -123,23 +106,34 @@ contract CampaignTypesNFT721 is
         address _to,
         string calldata _callbackData
     ) external {
-        InZNFTTypeDetail.NFTTypeDetail memory nftTypeDetail = nftTypes[_tokenType];
-        require(nftTypeDetail.totalSupply > 0, "Token type does not exist");
+        // InZNFTTypeDetail.NFTTypeDetail memory nftTypeDetail = nftTypes[_tokenType];
+        // require(nftTypeDetail.totalSupply > 0, "Token type does not exist");
 
-        // Check token type supply
-        uint256 nftTypeRemaining = nftTypeDetail.totalSupply;
+        // // Check token type supply
+        // uint256 nftTypeRemaining = nftTypeDetail.totalSupply;
 
-        uint256 _remainNftTypeCurrent = nftTypeRemaining - _amount;
+        // uint256 _remainNftTypeCurrent = nftTypeRemaining - _amount;
 
-        require(_remainNftTypeCurrent >= 0, "NFT type sold out");
+        // require(_remainNftTypeCurrent >= 0, "NFT type sold out");
 
-        // update total supply of token type in mapping
-        nftTypes[_tokenType].totalSupply = _remainNftTypeCurrent;
+        // // update total supply of token type in mapping
+        // nftTypes[_tokenType].totalSupply = _remainNftTypeCurrent;
 
-        ReturnMintingOrder[] memory _returnOrder = new ReturnMintingOrder[](_amount);
+        // ReturnMintingOrder[] memory _returnOrder = new ReturnMintingOrder[](_amount);
 
-        for (uint256 i = 0; i < _amount; ++i) {
-            uint256 _id = tokenIdCounter.current();
+        // for (uint256 i = 0; i < _amount; ++i) {
+        //     uint256 _id = tokenIdCounter.current();
+        //     tokenIdCounter.increment();
+        //     _safeMint(_to, _id);
+        //     // Update user bought list
+        //     holders[_to].push(_id);
+        //     // Update token id by type
+        //     tokenIdsByType[_id] = _tokenType;
+        //     emit TokenCreated(_to, _id, _tokenType);
+        //     _returnOrder[i] = ReturnMintingOrder(_id, _tokenType);
+        // }
+
+        uint256 _id = tokenIdCounter.current();
             tokenIdCounter.increment();
             _safeMint(_to, _id);
             // Update user bought list
@@ -147,13 +141,11 @@ contract CampaignTypesNFT721 is
             // Update token id by type
             tokenIdsByType[_id] = _tokenType;
             emit TokenCreated(_to, _id, _tokenType);
-            _returnOrder[i] = ReturnMintingOrder(_id, _tokenType);
-        }
 
-        emit Mint(_callbackData, _to, _returnOrder);
+        emit Mint(_callbackData, _to);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ONFT721Core, ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ONFT721Core, ERC721Upgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
@@ -200,20 +192,20 @@ contract CampaignTypesNFT721 is
     }
 
     /** Burns a list  nft ids. */
-    function burn(uint256[] memory ids) external onlyRole(BURNER_ROLE) {
+    function burn(uint256[] memory ids) external {
         for (uint256 i = 0; i < ids.length; ++i) {
             _burn(ids[i]);
         }
     }
 
-    function setCampaignPaymentAddress(address _campaignPaymentAddress) external onlyRole(DESIGN_ROLE) {
+    function setCampaignPaymentAddress(address _campaignPaymentAddress) external {
         campaignPaymentAddress = _campaignPaymentAddress;
     }
 
     /**
      *  @notice Function get factory address
      */
-    function getFactoryAddress() external view onlyRole(ADMIN_ROLE) returns (address) {
+    function getFactoryAddress() external view returns (address) {
         return factoryAddress;
     }
 
