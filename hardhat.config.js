@@ -22,26 +22,6 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
     }
 })
 
-function getMnemonic(networkName) {
-    if (networkName) {
-        const mnemonic = process.env["MNEMONIC_" + networkName.toUpperCase()]
-        if (mnemonic && mnemonic !== "") {
-            return mnemonic
-        }
-    }
-
-    const mnemonic = process.env.MNEMONIC
-    if (!mnemonic || mnemonic === "") {
-        return "test test test test test test test test test test test junk"
-    }
-
-    return mnemonic
-}
-
-function accounts(chainKey) {
-    return { mnemonic: getMnemonic(chainKey) }
-}
-
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
