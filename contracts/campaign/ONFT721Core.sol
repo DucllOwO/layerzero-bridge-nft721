@@ -25,8 +25,9 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, ReentrancyGuard, IONF
 
     function initialize(uint _minGasToTransferAndStore, address _lzEndpoint) public {
         require(_minGasToTransferAndStore > 0, "minGasToTransferAndStore must be > 0");
-        minGasToTransferAndStore = _minGasToTransferAndStore;
+        __Ownable_init();
 
+        minGasToTransferAndStore = _minGasToTransferAndStore;
         // call initialize cua nonblockinglzapp
         NonblockingLzApp.initializeNonblockingLzApp(_lzEndpoint);
     }
@@ -181,21 +182,21 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, ReentrancyGuard, IONF
         return i;
     }
 
-    function setMinGasToTransferAndStore(uint _minGasToTransferAndStore) public {
+    function setMinGasToTransferAndStore(uint _minGasToTransferAndStore) external onlyOwner {
         require(_minGasToTransferAndStore > 0, "minGasToTransferAndStore must be > 0");
         minGasToTransferAndStore = _minGasToTransferAndStore;
         emit SetMinGasToTransferAndStore(_minGasToTransferAndStore);
     }
 
     // ensures enough gas in adapter params to handle batch transfer gas amounts on the dst
-    function setDstChainIdToTransferGas(uint16 _dstChainId, uint _dstChainIdToTransferGas) external {
+    function setDstChainIdToTransferGas(uint16 _dstChainId, uint _dstChainIdToTransferGas) external onlyOwner {
         require(_dstChainIdToTransferGas > 0, "dstChainIdToTransferGas must be > 0");
         dstChainIdToTransferGas[_dstChainId] = _dstChainIdToTransferGas;
         emit SetDstChainIdToTransferGas(_dstChainId, _dstChainIdToTransferGas);
     }
 
     // limit on src the amount of tokens to batch send
-    function setDstChainIdToBatchLimit(uint16 _dstChainId, uint _dstChainIdToBatchLimit) external {
+    function setDstChainIdToBatchLimit(uint16 _dstChainId, uint _dstChainIdToBatchLimit) external onlyOwner {
         require(_dstChainIdToBatchLimit > 0, "dstChainIdToBatchLimit must be > 0");
         dstChainIdToBatchLimit[_dstChainId] = _dstChainIdToBatchLimit;
         emit SetDstChainIdToBatchLimit(_dstChainId, _dstChainIdToBatchLimit);

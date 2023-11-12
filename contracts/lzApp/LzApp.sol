@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "./interfaces/ILayerZeroReceiver.sol";
 import "./interfaces/ILayerZeroUserApplicationConfig.sol";
 import "./interfaces/ILayerZeroEndpoint.sol";
@@ -12,7 +13,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 /*
  * a generic LzReceiver implementation
  */
-abstract contract LzApp is ILayerZeroReceiver, ILayerZeroUserApplicationConfig {
+abstract contract LzApp is 
+    OwnableUpgradeable, ILayerZeroReceiver, ILayerZeroUserApplicationConfig {
     using BytesLib for bytes;
 
     // ua can not send payload larger than this by default, but it can be changed by the ua owner
@@ -30,6 +32,7 @@ abstract contract LzApp is ILayerZeroReceiver, ILayerZeroUserApplicationConfig {
     event SetMinDstGas(uint16 _dstChainId, uint16 _type, uint _minDstGas);
 
     function initializeLzApp(address _endpoint) public virtual {
+        __Ownable_init();
         lzEndpoint = ILayerZeroEndpoint(_endpoint);
     }
 
@@ -122,30 +125,30 @@ abstract contract LzApp is ILayerZeroReceiver, ILayerZeroUserApplicationConfig {
         uint16 _chainId,
         uint _configType,
         bytes calldata _config
-    ) external override {
+    ) external override onlyOwner {
         lzEndpoint.setConfig(_version, _chainId, _configType, _config);
     }
 
-    function setSendVersion(uint16 _version) external override {
+    function setSendVersion(uint16 _version) external override onlyOwner {
         lzEndpoint.setSendVersion(_version);
     }
 
-    function setReceiveVersion(uint16 _version) external override {
+    function setReceiveVersion(uint16 _version) external override onlyOwner {
         lzEndpoint.setReceiveVersion(_version);
     }
 
-    function forceResumeReceive(uint16 _srcChainId, bytes calldata _srcAddress) external override {
+    function forceResumeReceive(uint16 _srcChainId, bytes calldata _srcAddress) external override onlyOwner {
         lzEndpoint.forceResumeReceive(_srcChainId, _srcAddress);
     }
 
     // _path = abi.encodePacked(remoteAddress, localAddress)
     // this function set the trusted path for the cross-chain communication
-    function setTrustedRemote(uint16 _remoteChainId, bytes calldata _path) external {
+    function setTrustedRemote(uint16 _remoteChainId, bytes calldata _path) external onlyOwner {
         trustedRemoteLookup[_remoteChainId] = _path;
         emit SetTrustedRemote(_remoteChainId, _path);
     }
 
-    function setTrustedRemoteAddress(uint16 _remoteChainId, bytes calldata _remoteAddress) external {
+    function setTrustedRemoteAddress(uint16 _remoteChainId, bytes calldata _remoteAddress) external onlyOwner {
         trustedRemoteLookup[_remoteChainId] = abi.encodePacked(_remoteAddress, address(this));
         emit SetTrustedRemoteAddress(_remoteChainId, _remoteAddress);
     }
@@ -156,7 +159,7 @@ abstract contract LzApp is ILayerZeroReceiver, ILayerZeroUserApplicationConfig {
         return path.slice(0, path.length - 20); // the last 20 bytes should be address(this)
     }
 
-    function setPrecrime(address _precrime) external {
+    function setPrecrime(address _precrime) external onlyOwner {
         precrime = _precrime;
         emit SetPrecrime(_precrime);
     }
@@ -165,13 +168,13 @@ abstract contract LzApp is ILayerZeroReceiver, ILayerZeroUserApplicationConfig {
         uint16 _dstChainId,
         uint16 _packetType,
         uint _minGas
-    ) external {
+    ) external onlyOwner {
         minDstGasLookup[_dstChainId][_packetType] = _minGas;
         emit SetMinDstGas(_dstChainId, _packetType, _minGas);
     }
 
     // if the size is 0, it means default size limit
-    function setPayloadSizeLimit(uint16 _dstChainId, uint _size) external {
+    function setPayloadSizeLimit(uint16 _dstChainId, uint _size) external onlyOwner {
         payloadSizeLimitLookup[_dstChainId] = _size;
     }
 

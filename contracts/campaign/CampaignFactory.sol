@@ -3,15 +3,13 @@ pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 
 import "./CampaignTypesNFT721.sol";
 import "./libraries/InZNFTTypeDetail.sol";
 
-contract CampaignFactory {
-    using EnumerableSet for EnumerableSet.AddressSet;
+contract CampaignFactory is AccessControl {
 
     /**
      *          Event Definitions
@@ -19,24 +17,30 @@ contract CampaignFactory {
     event NewNFT(
         address campaignAddress,
         address campaignPaymentAddress,
+        InZNFTTypeDetail.NFTTypeDetail[] nftTypesDetail,
         IERC20 coinToken,
         string symbol,
         string name,
         address adminAddress
     );
 
+    event SetConfiguration(address newConfiguration);
+
     /**
      *          Storage data declarations
      */
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    // List of NFT collections
-    EnumerableSet.AddressSet private nftCollectionsList;
+    // InZCampaigns Address list
+    address[] public inZNftCampaignsAddress;
 
     address public onft721ImplementationAddress;
 
     constructor(address _implementationAddress) {
         onft721ImplementationAddress = _implementationAddress;
+
+        _setupRole(ADMIN_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     } 
 
     /**
@@ -52,42 +56,35 @@ contract CampaignFactory {
         IERC20 _coinToken,
         string memory _symbol,
         string memory _name,
+        InZNFTTypeDetail.NFTTypeDetail[] memory _nftTypesDetail,
         uint _minGasToStore,
         address _layerZeroEndpoint
     ) external {
         address campaign;
-        campaign = 
-        // new CampaignTypesNFT721(
-        //     _name,
-        //     _symbol,
-        //     _campaignPaymentAddress,
-        //     _baseMetadataUri,
-        //     // address(this),
-        //     _minGasToStore,
-        //     _layerZeroEndpoint
-        // ); 
-        Clones.clone(onft721ImplementationAddress);
+        campaign = Clones.clone(onft721ImplementationAddress);
 
         CampaignTypesNFT721(campaign).initialize(
             _name,
             _symbol,
             _campaignPaymentAddress,
             _baseMetadataUri,
-            //address(this),
+            address(this),
+            msg.sender,
             _minGasToStore,
             _layerZeroEndpoint
         );
 
-        nftCollectionsList.add(address(campaign));
+        // Config prices, supply for each type
+        for (uint i = 0; i < _nftTypesDetail.length; i++) {
+            CampaignTypesNFT721(campaign).configNFTType(_nftTypesDetail[i].nftType, _nftTypesDetail[i].price, _nftTypesDetail[i].totalSupply);
+        }
 
-        // Config prices
-        // for (uint i = 0; i < _nftTypesDetail.length; i++) {
-        //     CampaignTypesNFT721(campaign).configNFTType(_nftTypesDetail[i].nftType, _nftTypesDetail[i].price, _nftTypesDetail[i].totalSupply);
-        // }
+        inZNftCampaignsAddress.push(address(campaign));
 
         emit NewNFT(
             address(campaign),
             _campaignPaymentAddress,
+            _nftTypesDetail,
             _coinToken,
             _symbol,
             _name,
@@ -95,10 +92,37 @@ contract CampaignFactory {
         );
     }
 
-    function getCollectionAddress(
-    ) external pure returns (address) {
+    /**
+     *              GETTERS
+     */
+    function getAllNFTCampaign()
+        external
+        view
+        onlyRole(ADMIN_ROLE)
+        returns (address[] memory)
+    {
+        return inZNftCampaignsAddress;
+    }
 
-        return address(0x0);
+    function getCollectionAddress(uint index) external view returns (address) {
+
+        return inZNftCampaignsAddress[index];
+    }
+
+    /**
+     *              SETTERS
+     */
+    function setImplementationAddress(address _newImplementationAddress) external onlyRole(ADMIN_ROLE) {
+        onft721ImplementationAddress = _newImplementationAddress;
+    }
+
+    /**
+     *              INHERITANCE FUNCTIONS
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(AccessControl) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 
 }
