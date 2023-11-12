@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "./interfaces/ILayerZeroReceiver.sol";
 import "./interfaces/ILayerZeroUserApplicationConfig.sol";
@@ -13,12 +12,13 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 /*
  * a generic LzReceiver implementation
  */
-abstract contract LzApp is 
-    OwnableUpgradeable, ILayerZeroReceiver, ILayerZeroUserApplicationConfig {
+abstract contract LzApp is AccessControlUpgradeable, ILayerZeroReceiver, ILayerZeroUserApplicationConfig {
     using BytesLib for bytes;
 
     // ua can not send payload larger than this by default, but it can be changed by the ua owner
     uint public constant DEFAULT_PAYLOAD_SIZE_LIMIT = 10000;
+
+    bytes32 internal constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     ILayerZeroEndpoint public lzEndpoint;
     mapping(uint16 => bytes) public trustedRemoteLookup;
@@ -32,8 +32,11 @@ abstract contract LzApp is
     event SetMinDstGas(uint16 _dstChainId, uint16 _type, uint _minDstGas);
 
     function initializeLzApp(address _endpoint) public virtual {
-        __Ownable_init();
+        __AccessControl_init();
         lzEndpoint = ILayerZeroEndpoint(_endpoint);
+
+
+        _setupRole(ADMIN_ROLE, tx.origin);
     }
 
     function lzReceive(
@@ -125,30 +128,30 @@ abstract contract LzApp is
         uint16 _chainId,
         uint _configType,
         bytes calldata _config
-    ) external override onlyOwner {
+    ) external override onlyRole(ADMIN_ROLE) {
         lzEndpoint.setConfig(_version, _chainId, _configType, _config);
     }
 
-    function setSendVersion(uint16 _version) external override onlyOwner {
+    function setSendVersion(uint16 _version) external override onlyRole(ADMIN_ROLE) {
         lzEndpoint.setSendVersion(_version);
     }
 
-    function setReceiveVersion(uint16 _version) external override onlyOwner {
+    function setReceiveVersion(uint16 _version) external override onlyRole(ADMIN_ROLE) {
         lzEndpoint.setReceiveVersion(_version);
     }
 
-    function forceResumeReceive(uint16 _srcChainId, bytes calldata _srcAddress) external override onlyOwner {
+    function forceResumeReceive(uint16 _srcChainId, bytes calldata _srcAddress) external override onlyRole(ADMIN_ROLE) {
         lzEndpoint.forceResumeReceive(_srcChainId, _srcAddress);
     }
 
     // _path = abi.encodePacked(remoteAddress, localAddress)
     // this function set the trusted path for the cross-chain communication
-    function setTrustedRemote(uint16 _remoteChainId, bytes calldata _path) external onlyOwner {
+    function setTrustedRemote(uint16 _remoteChainId, bytes calldata _path) external onlyRole(ADMIN_ROLE) {
         trustedRemoteLookup[_remoteChainId] = _path;
         emit SetTrustedRemote(_remoteChainId, _path);
     }
 
-    function setTrustedRemoteAddress(uint16 _remoteChainId, bytes calldata _remoteAddress) external onlyOwner {
+    function setTrustedRemoteAddress(uint16 _remoteChainId, bytes calldata _remoteAddress) external onlyRole(ADMIN_ROLE) {
         trustedRemoteLookup[_remoteChainId] = abi.encodePacked(_remoteAddress, address(this));
         emit SetTrustedRemoteAddress(_remoteChainId, _remoteAddress);
     }
@@ -159,7 +162,7 @@ abstract contract LzApp is
         return path.slice(0, path.length - 20); // the last 20 bytes should be address(this)
     }
 
-    function setPrecrime(address _precrime) external onlyOwner {
+    function setPrecrime(address _precrime) external onlyRole(ADMIN_ROLE) {
         precrime = _precrime;
         emit SetPrecrime(_precrime);
     }
@@ -168,13 +171,13 @@ abstract contract LzApp is
         uint16 _dstChainId,
         uint16 _packetType,
         uint _minGas
-    ) external onlyOwner {
+    ) external onlyRole(ADMIN_ROLE) {
         minDstGasLookup[_dstChainId][_packetType] = _minGas;
         emit SetMinDstGas(_dstChainId, _packetType, _minGas);
     }
 
     // if the size is 0, it means default size limit
-    function setPayloadSizeLimit(uint16 _dstChainId, uint _size) external onlyOwner {
+    function setPayloadSizeLimit(uint16 _dstChainId, uint _size) external onlyRole(ADMIN_ROLE) {
         payloadSizeLimitLookup[_dstChainId] = _size;
     }
 

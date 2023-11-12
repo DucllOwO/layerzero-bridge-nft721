@@ -15,13 +15,11 @@ import "./ONFT721Core.sol";
 import "./interfaces/IONFT721Core.sol";
 import "../lzApp/interfaces/ILayerZeroEndpoint.sol";
 import "./interfaces/IONFT721.sol";
-import "./libraries/InterfaceFunction.sol";
 
 contract CampaignTypesNFT721 is
     ONFT721Core,
     ERC721Upgradeable,
-    UUPSUpgradeable,
-    AccessControlUpgradeable
+    UUPSUpgradeable
 {
     /**
      *          External using
@@ -46,7 +44,7 @@ contract CampaignTypesNFT721 is
     // /**
     //  *          Storage data declarations
     //  */
-    bytes32 internal constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    
     bytes32 internal constant DESIGN_ROLE = keccak256("DESIGN_ROLE");
     bytes32 internal constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
@@ -67,8 +65,6 @@ contract CampaignTypesNFT721 is
     mapping(uint8 => string) public uriByType;
     // mapping NFT creted from Factory
     address internal factoryAddress;
-
-
 
     function initialize(
         string memory _name,
@@ -92,7 +88,6 @@ contract CampaignTypesNFT721 is
 
         ONFT721Core.initialize(_minGasToStore, _layerZeroEndpoint);
 
-        _setupRole(ADMIN_ROLE, _adminAddress);
         _setupRole(DEFAULT_ADMIN_ROLE, _adminAddress);
 
         _setupRole(DESIGN_ROLE, _adminAddress);
@@ -101,7 +96,7 @@ contract CampaignTypesNFT721 is
 
     function configNFTType(uint8 _nftType,
         uint256 _price,
-        uint256 _totalSupply) external {
+        uint256 _totalSupply) public {
         InZNFTTypeDetail.NFTTypeDetail memory _nftTypeNew;
         _nftTypeNew.nftType = _nftType;
         if (_totalSupply == 0) {
@@ -266,7 +261,7 @@ contract CampaignTypesNFT721 is
         onlyRole(ADMIN_ROLE)
     {}
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ONFT721Core, ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ONFT721Core, ERC721Upgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
@@ -280,41 +275,5 @@ contract CampaignTypesNFT721 is
             size := extcodesize(addr)
         }
         return size > 0;
-    }
-
-    /**
-     *  @notice     This function is only used for estimation purpose, therefore the call will always revert and encode the result in the revert data.
-     *  @dev        This function's used for estimate gas for a execution call
-     *  @param to           The address of caller
-     *  @param value        The value of msg.value
-     *  @param data         The data sent with tx
-     *  @param operation    the operation of tx
-     */
-    function requiredTxGas(
-        address to,
-        uint256 value,
-        bytes calldata data,
-        InterfaceFunction.Operation operation
-    ) external onlyRole(ADMIN_ROLE) // returns (uint256)
-    {
-        InterfaceFunction.requiredTxGas(to, value, data, operation);
-    }
-
-    /**
-     * This function allow ADMIN can execute a function witj specificed logic and params flexibily
-     * @param to The caller of tx
-     * @param value The msg.value of tx
-     * @param txGas The estimated gas using for the tx
-     * @param data The data comming with the tx
-     * @param operation The operation of tx
-     */
-    function execTx(
-        address to,
-        uint256 value,
-        uint256 txGas,
-        bytes calldata data,
-        InterfaceFunction.Operation operation
-    ) external onlyRole(ADMIN_ROLE) {
-        InterfaceFunction.execTx(to, value, txGas, data, operation);
     }
 }

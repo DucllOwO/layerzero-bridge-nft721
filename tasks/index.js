@@ -13,8 +13,9 @@ task(
 
 //
 task("onftMint", "mint() mint ONFT", require("./onftMint"))
-    .addParam("toAddress", "address to mint the ONFT to")
-    .addParam("tokenId", "the tokenId of the ONFT")
+    .addParam("amount", "the amount nft to mint")
+    .addParam("tokenType", "the type of token")
+    .addParam("to", "address to transfer token to")
     .addParam("contract", "Name of contract")
 
 //

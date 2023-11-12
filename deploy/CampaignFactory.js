@@ -14,7 +14,7 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
     const name = "MumbaiScroll"
     const symbol = "SYM"
     const minGasToStore = 100000
-    const nftTypeDetails = [{ nftType: 0, price: 1000, totalSupply: 100000 }]
+    const nftTypeDetails = [[0, 100, 10000]]
 
     const nft721Implementation = await deploy("CampaignTypesNFT721", {
         from: deployer,
@@ -36,7 +36,7 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
 
     const _campaignPaymentAddress = "0x29E754233F6A50ee5AE3ee6A0217aD907dc3386B"
     const _baseMetadataUri = "baseURI.com/uri"
-    const erc20 = "0x0000000000000000000000000000000000001010"
+    const erc20 = "0x0000000000000000000000000000000000000000"
 
     let contract = await ethers.getContract("CampaignFactory")
 
@@ -48,13 +48,21 @@ module.exports = async function ({ deployments, getNamedAccounts }) {
         erc20,
         symbol,
         name,
+        nftTypeDetails,
         minGasToStore,
-        lzEndpointAddress
+        lzEndpointAddress,
+        { gasLimit: 1500000 }
     )
 
     const txCampaign = await campaignTypesNFT721.wait()
 
-    console.log("🚀 ~ file: CampaignFactory.js:49 ~ txCampaign:", txCampaign.events)
+    console.log("🚀 ~ file: CampaignFactory.js:49 ~ cloned address:", getClonedContractAddress(txCampaign.events))
+}
+
+const EVENT_NAME = "NewNFT"
+
+function getClonedContractAddress(events) {
+    return events.filter((event) => event.event == EVENT_NAME).args[0]
 }
 
 module.exports.tags = ["CampaignFactory"]
